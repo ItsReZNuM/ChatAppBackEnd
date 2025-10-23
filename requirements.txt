@@ -1,0 +1,12 @@
+fastapi
+uvicorn[standard]
+SQLAlchemy
+asyncpg
+psycopg2-binary
+python-multipart
+alembic
+pydantic
+python-dotenv
+python-socketio[asgi]
+redis
+celery

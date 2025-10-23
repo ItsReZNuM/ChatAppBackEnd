@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="fa">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Simple Group Chat</title>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jalaali-js/dist/jalaali.min.js"></script>
+    <style>
+        body {
+            font-family: sans-serif;
+            max-width: 700px;
+            margin: 30px auto;
+            background: #fafafa;
+        }
+
+        #login,
+        #chat {
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 16px;
+            background: white;
+        }
+
+        #chat {
+            display: none;
+        }
+
+        #messages {
+            border: 1px solid #ddd;
+            height: 420px;
+            overflow-y: auto;
+            padding: 8px;
+            margin-bottom: 8px;
+            background: #fefefe;
+        }
+
+        .msg {
+            margin: 6px 0;
+            padding: 6px;
+            border-radius: 6px;
+            background: #fff;
+            border: 1px solid #eee;
+        }
+
+        .mine {
+            background: #eef6ff;
+            border-color: #cfe9ff;
+        }
+
+        .meta {
+            font-size: 12px;
+            color: #666;
+            margin-top: 2px;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .actions {
+            margin-top: 4px;
+            display: flex;
+            gap: 6px;
+        }
+
+        .btn {
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid #aaa;
+            background: #f7f7f7;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background: #eee;
+        }
+
+        input,
+        button {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #aaa;
+        }
+
+        button {
+            cursor: pointer;
+            background: #4caf50;
+            color: white;
+            border: none;
+        }
+
+        button:hover {
+            background: #45a049;
+        }
+
+        .system {
+            color: gray;
+            font-style: italic;
+            padding: 4px 0;
+        }
+
+        .edited-tag {
+            font-size: 11px;
+            color: #999;
+        }
+
+        #attachBtn {
+            font-size: 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        #attachBtn:hover {
+            transform: scale(1.1);
+        }
+
+        .chat-img {
+            max-width: 200px;
+            border-radius: 8px;
+            margin-top: 5px;
+        }
+
+        .chat-video {
+            max-width: 300px;
+            border-radius: 8px;
+            margin-top: 5px;
+        }
+
+        .reply-preview {
+            font-size: 12px;
+            color: #444;
+            background: #f7f7f7;
+            border-left: 3px solid #4caf50;
+            padding: 4px 6px;
+            border-radius: 4px;
+            margin-bottom: 4px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="login">
+        <h3>ورود به گروه</h3>
+        <input id="username" placeholder="یوزرنیم" />
+        <input id="room" type="number" placeholder="آیدی گروه (عدد)" />
+        <button id="join">ورود</button>
+        <p id="loginError" style="color:#d00"></p>
+    </div>
+
+    <div id="chat" style="display:none; flex-direction:column; height:100%;">
+        <h3 id="roomTitle"></h3>
+
+        <!-- محل نمایش پیام‌ها -->
+        <div id="messages" style="flex:1; overflow-y:auto; margin-bottom:10px;"></div>
+        <!-- نمایش اطلاعات ریپلای -->
+        <div id="replyBox"
+            style="display:none; background:#f0f0f0; border-left:4px solid #4caf50; padding:6px; border-radius:4px; margin-bottom:6px; font-size:13px;">
+            <span id="replyInfo"></span>
+            <button id="cancelReply"
+                style="float:right; background:none; border:none; cursor:pointer; color:#d00;">❌</button>
+        </div>
+
+        <!-- فیلد ارسال پیام + دکمه سنجاق + ارسال -->
+        <div style="display:flex; gap:8px; align-items:center;">
+            <input id="messageInput" placeholder="پیام بنویس..." style="flex:1" />
+            <input type="file" id="fileInput" hidden />
+            <button id="attachBtn" type="button" title="ارسال فایل">📎</button>
+            <button id="send" type="button">ارسال</button>
+
+        </div>
+    </div>
+
+
+    <script>
+        const socket = io("http://localhost:8000", { transports: ["websocket"] });
+        let username = null;
+        let roomId = null;
+        let replyingTo = null;
+
+        const loginDiv = document.getElementById("login");
+        const chatDiv = document.getElementById("chat");
+        const messagesDiv = document.getElementById("messages");
+        const sendBtn = document.getElementById("send");
+        const messageInput = document.getElementById("messageInput");
+        const loginError = document.getElementById("loginError");
+
+        document.getElementById("join").onclick = () => {
+            username = document.getElementById("username").value.trim();
+            roomId = parseInt(document.getElementById("room").value);
+            if (!username || !roomId) {
+                alert("یوزرنیم و آیدی گروه الزامی است");
+                return;
+            }
+            loginError.textContent = "";
+            socket.emit("join", { username, room_id: roomId });
+        };
+
+        // تابع تبدیل تاریخ میلادی به جلالی
+        function toJalaliHM(iso) {
+            if (!iso) return "";
+            const d = new Date(iso);
+            const j = jalaali.toJalaali(d);
+            const pad = (n) => String(n).padStart(2, "0");
+            return `${j.jy}/${pad(j.jm)}/${pad(j.jd)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        }
+
+        socket.on("error", (e) => {
+            if (e?.message?.includes("یوزرنیم")) {
+                loginError.textContent = e.message;
+            } else {
+                console.error("ERR:", e);
+            }
+        });
+
+        socket.on("history", (data) => {
+            loginDiv.style.display = "none";
+            chatDiv.style.display = "block";
+            document.getElementById("roomTitle").textContent = `💬 گروه شماره ${data.room_id}`;
+            messagesDiv.innerHTML = "";
+
+            data.messages.forEach((m) => {
+                const content = (m.reply_text)
+                    ? { text: m.content, replied_to_user: m.reply_user, replied_to_text: m.reply_text }
+                    : m.content;
+
+                const mine = m.username?.trim()?.toLowerCase() === username?.trim()?.toLowerCase();
+                appendMsg(m.id, m.username, content, mine, toJalaliHM(m.created_at), !!m.edited_at);
+            });
+
+            scrollToBottom();
+        });
+
+
+        socket.on("message", (m) => {
+            const content = (m.reply_text)
+                ? { text: m.content, replied_to_user: m.reply_user, replied_to_text: m.reply_text }
+                : m.content;
+
+            const mine = m.username.trim().toLowerCase() === username.trim().toLowerCase();
+            if (mine) {
+                const local = messagesDiv.querySelector(`[data-id^="local-"]`);
+                if (local) local.remove();
+            }
+
+            appendMsg(m.id, m.username, content, mine, toJalaliHM(m.created_at), !!m.edited_at);
+            scrollToBottom();
+        });
+
+
+
+        socket.on("message_edited", (m) => {
+            updateMsgContent(m.id, m.username, m.content, true, toJalaliHM(m.edited_at));
+        });
+
+        socket.on("message_deleted", (m) => {
+            console.log("🟢 پیام حذف‌شده از سرور دریافت شد:", m);
+            removeMsg(m.id);
+        });
+
+        socket.on("system", (m) => appendSystem(m.message));
+        socket.on("connect", () => console.log("connected"));
+
+        sendBtn.onclick = sendMessage;
+        messageInput.addEventListener("keyup", (e) => { if (e.key === "Enter") sendMessage(); });
+        // --- 📎 ارسال فایل ---
+        const fileInput = document.getElementById("fileInput");
+        const attachBtn = document.getElementById("attachBtn");
+
+        attachBtn.onclick = (e) => {
+            e.preventDefault(); // جلوگیری از رفتار پیش‌فرض فرم
+            fileInput.click();
+        };
+
+        fileInput.onchange = async () => {
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append("file", file);
+
+            try {
+                const res = await fetch("http://127.0.0.1:8000/api/upload/", {
+                    method: "POST",
+                    body: formData,
+                });
+                console.log("🔹 Uploading to:", window.location.origin + "/api/upload/");
+                const data = await res.json();
+                const fileUrl = data.url;
+
+                console.log("📎 فایل آپلود شد:", fileUrl);
+                socket.emit("media_message", { username, room_id: roomId, file_url: fileUrl });
+            } catch (err) {
+                console.error("❌ خطا در آپلود فایل:", err);
+            }
+
+            fileInput.value = "";
+        };
+
+        function sendMessage() {
+            const text = messageInput.value.trim();
+            if (!text) return;
+
+            socket.emit("message", {
+                room_id: roomId,
+                username,
+                content: text,
+                replied_to: replyingTo,
+            });
+
+            appendMsg(
+                "local-" + Date.now(),
+                username,
+                text,
+                true,
+                toJalaliHM(new Date().toISOString()),
+                false
+            );
+
+            messageInput.value = "";
+            replyingTo = null;
+            document.getElementById("replyBox").style.display = "none";
+            scrollToBottom();
+        }
+
+
+        // ====== ساخت نمایش پیام‌ها =======
+        function appendMsg(id, user, text, mine = false, jtime = "", edited = false) {
+            const div = document.createElement("div");
+            div.classList.add("msg");
+            div.dataset.id = id;
+
+            user = user || "ناشناس";
+
+            // preview ریپلای (فقط اگر reply_* هست)
+            if (text && typeof text === "object" && text.replied_to_text) {
+                const preview = document.createElement("div");
+                preview.classList.add("reply-preview");
+                preview.textContent = `در پاسخ به "${text.replied_to_text}" از طرف ${text.replied_to_user}`;
+                div.appendChild(preview);
+            }
+
+            // بدنه پیام
+            const body = document.createElement("div");
+            body.classList.add("body");
+            body.textContent = `${user}: ${typeof text === "object" ? text.text : text}`;
+            div.appendChild(body);
+
+            // متا
+            const meta = document.createElement("div");
+            meta.classList.add("meta");
+            meta.innerHTML = `<span>${jtime}</span>${edited ? '<span class="edited-tag">edited</span>' : ""}`;
+            div.appendChild(meta);
+
+            // اکشن‌ها
+            const actions = document.createElement("div");
+            actions.classList.add("actions");
+
+            // ریپلای برای همه
+            const replyBtn = document.createElement("button");
+            replyBtn.classList.add("btn");
+            replyBtn.textContent = "ریپلای";
+            replyBtn.onclick = () => startReply(id, user, (typeof text === "object" ? text.text : text));
+            actions.appendChild(replyBtn);
+
+            // ادیت/حذف فقط برای خودم
+            const isMine = user?.trim()?.toLowerCase() === username?.trim()?.toLowerCase();
+            if (isMine && !String(id).startsWith("local-")) {
+                const editBtn = document.createElement("button");
+                editBtn.classList.add("btn");
+                editBtn.textContent = "ویرایش";
+                editBtn.onclick = () => {
+                    const cur = (typeof text === "object" ? text.text : text);
+                    const newText = prompt("متن جدید پیام:", cur);
+                    if (!newText || newText.trim() === cur) return;
+                    socket.emit("edit_message", { message_id: id, username, content: newText.trim() });
+                };
+                actions.appendChild(editBtn);
+
+                const delBtn = document.createElement("button");
+                delBtn.classList.add("btn");
+                delBtn.textContent = "حذف";
+                delBtn.onclick = () => {
+                    if (!confirm("حذف شود؟")) return;
+                    socket.emit("delete_message", { message_id: id, username });
+                };
+                actions.appendChild(delBtn);
+            }
+
+            div.appendChild(actions);
+
+            if (isMine) div.classList.add("mine");
+            messagesDiv.appendChild(div);
+        }
+
+
+        // ====== متدهای کمکی =======
+        function updateMsgContent(id, user, newText, edited, jtime) {
+            const el = messagesDiv.querySelector(`[data-id="${id}"]`);
+            if (!el) return;
+
+            // فقط بدنه پیام را تغییر بده، به preview دست نزن
+            const body = el.querySelector(".body");
+            if (body) body.textContent = `${user}: ${newText}`;
+
+            // متای پایین را به‌روزرسانی کن
+            const meta = el.querySelector(".meta");
+            if (meta) {
+                meta.innerHTML = `<span>${jtime}</span>${edited ? '<span class="edited-tag">edited</span>' : ""}`;
+            }
+
+            // مالک پیام
+            const isMine = user?.trim()?.toLowerCase() === username?.trim()?.toLowerCase();
+            el.classList.toggle("mine", isMine);
+
+            // اگر دکمه‌ها نبود، بساز
+            if (isMine && !el.querySelector(".actions") && !String(id).startsWith("local-")) {
+                const actions = document.createElement("div");
+                actions.classList.add("actions");
+
+                const editBtn = document.createElement("button");
+                editBtn.classList.add("btn");
+                editBtn.textContent = "ویرایش";
+                editBtn.onclick = () => {
+                    const newTextPrompt = prompt("متن جدید پیام:", newText);
+                    if (!newTextPrompt || newTextPrompt.trim() === newText) return;
+                    socket.emit("edit_message", { message_id: id, username, content: newTextPrompt.trim() });
+                };
+
+                const delBtn = document.createElement("button");
+                delBtn.classList.add("btn");
+                delBtn.textContent = "حذف";
+                delBtn.onclick = () => {
+                    if (!confirm("حذف شود؟")) return;
+                    socket.emit("delete_message", { message_id: id, username });
+                };
+
+                actions.appendChild(editBtn);
+                actions.appendChild(delBtn);
+                el.appendChild(actions);
+            }
+        }
+
+
+
+        function removeMsg(id) {
+            const el = messagesDiv.querySelector(`[data-id="${id}"]`);
+            if (el) el.remove();
+        }
+        function startReply(id, user, text) {
+            replyingTo = id;
+            const replyBox = document.getElementById("replyBox");
+            const replyInfo = document.getElementById("replyInfo");
+            replyInfo.textContent = `در پاسخ به "${text}" از طرف ${user}`;
+            replyBox.style.display = "block";
+        }
+
+        document.getElementById("cancelReply").onclick = () => {
+            replyingTo = null;
+            document.getElementById("replyBox").style.display = "none";
+        };
+
+        function appendSystem(text) {
+            const div = document.createElement("div");
+            div.classList.add("system");
+            div.textContent = text;
+            messagesDiv.appendChild(div);
+            scrollToBottom();
+        }
+
+        function scrollToBottom() {
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+        socket.on("media_message", (m) => {
+            appendMediaMsg(m.username, m.file_url);
+        });
+
+        function appendMediaMsg(user, url) {
+            const div = document.createElement("div");
+            div.classList.add("msg");
+
+            const ext = url.split(".").pop().toLowerCase();
+            let content;
+
+            if (["jpg", "jpeg", "png", "gif", "webp"].includes(ext)) {
+                content = `<img src="${url}" class="chat-img" />`;
+            } else if (["mp4", "webm"].includes(ext)) {
+                content = `<video src="${url}" class="chat-video" controls></video>`;
+            } else {
+                content = `<a href="${url}" target="_blank">📎 دانلود فایل (${ext})</a>`;
+            }
+
+            div.innerHTML = `<b>${user}:</b><br>${content}`;
+            document.getElementById("messages").appendChild(div);
+            document.getElementById("messages").scrollTop = document.getElementById("messages").scrollHeight;
+        }
+
+    </script>
+
+</body>
+
+</html>
