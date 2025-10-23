@@ -63,7 +63,19 @@ def register_socket_events(sio: socketio.AsyncServer):
             to_json_safe({"room_id": room_id, "messages": messages, "users": users}),
             to=sid,
         )
-        await sio.emit("system", {"message": f"{username} joined room {room_id}."}, room=str(room_id))
+
+        # ✅ پیام برای خودش
+        await sio.emit("system", to_json_safe({
+            "content": f"You joined room {room_id}.",
+            "room_id": room_id
+        }), to=sid)
+
+        # ✅ پیام برای بقیه
+        await sio.emit("system", to_json_safe({
+            "content": f"{username} joined room {room_id}.",
+            "room_id": room_id
+        }), room=str(room_id))
+        print(f"Sent System message: {username} joined room {room_id}")
 
 
     @sio.on("delete_message")
@@ -109,7 +121,8 @@ def register_socket_events(sio: socketio.AsyncServer):
             users = active_users_by_room.get(room_id)
             if users and username in users:
                 users.remove(username)
-            await sio.emit("system", {"message": f"{username} left room {room_id}."}, room=str(room_id))
+            await sio.emit("system", {"content": f"{username} left room {room_id}."}, room=str(room_id))
+            print(f"Sent System message: {username} Left room {room_id}")
 
     @sio.on("edit_message")
     async def handle_edit_message(sid, data, callback=None):

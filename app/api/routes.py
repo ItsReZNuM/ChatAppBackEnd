@@ -41,7 +41,7 @@ class DeleteIn(BaseModel):
 
 @router.delete("/messages/{message_id}")
 async def remove_message(message_id: int, body: DeleteIn, session: AsyncSession = Depends(get_async_session)):
-    ok = await delete_message(session, message_id, body.username)
+    ok = await delete_message_db(session, message_id, body.username)
     if not ok:
         raise HTTPException(status_code=403, detail="not allowed or message not found")
     return {"ok": True}
