@@ -10,7 +10,7 @@ from app.db.crud import (
     get_history,
     create_message,
     update_message,
-    delete_message as delete_message_db,
+    delete_message_db,
 )
 from sqlalchemy import select
 from app.db.models import User
@@ -81,6 +81,22 @@ def register_socket_events(sio: socketio.AsyncServer):
         room_id = sess.get("room_id") or data.get("room_id")
 
         await sio.emit("message_deleted", {"id": message_id, "room_id": room_id}, room=str(room_id))
+        async with AsyncSessionLocal() as db2:
+            q = await db2.execute(
+                select(Message.id).where(Message.replied_to == message_id)
+            )
+            children = [r[0] for r in q.fetchall()]
+            for child_id in children:
+                await sio.emit(
+                    "parent_deleted",
+                    {"parent_id": message_id, "room_id": room_id},
+                    room=str(room_id),
+                )
+        await sio.emit(
+            "parent_deleted",
+            {"parent_id": message_id, "room_id": room_id},
+            room=str(room_id),
+        )
 
 
 
@@ -142,6 +158,27 @@ def register_socket_events(sio: socketio.AsyncServer):
             "reply_deleted": reply_deleted,
         }
         await sio.emit("message_edited", to_json_safe(payload), room=str(msg.room_id))
+        async with AsyncSessionLocal() as db2:
+            q = await db2.execute(
+                select(Message.id).where(Message.replied_to == msg.id)
+            )
+            children = [r[0] for r in q.fetchall()]
+            for child_id in children:
+                await sio.emit(
+                    "parent_edited",
+                    {
+                        "parent_id": msg.id,
+                        "new_text": msg.content,
+                        "parent_user": username,
+                        "room_id": msg.room_id,
+                    },
+                    room=str(msg.room_id),
+                )
+        await sio.emit(
+            "parent_edited",
+            {"parent_id": msg.id, "new_text": msg.content, "parent_user": username, "room_id": msg.room_id},
+            room=str(msg.room_id),
+        )
 
 
     @sio.on("message")

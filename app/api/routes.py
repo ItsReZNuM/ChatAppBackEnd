@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.session import get_async_session
 from app.db.schemas import HistoryOut, MessageOut
-from app.db.crud import get_or_create_room, get_history, update_message, delete_message
+from app.db.crud import get_or_create_room, get_history, update_message, delete_message_db
 import os
 from fastapi.responses import FileResponse
 

@@ -280,15 +280,17 @@
         socket.on("message_deleted", (data) => {
             const { id } = data;
             const el = messagesDiv.querySelector(`[data-id="${id}"]`);
-            if (el) {
-                const body = el.querySelector(".body");
-                if (body) body.textContent = "— پیام حذف شده —";
-                const meta = el.querySelector(".meta");
-                if (meta) meta.innerHTML = `<span>—</span><span class="edited-tag">deleted</span>`;
-            }
+            if (el) el.remove(); // حذف کامل پیام از DOM
             updateReplyPreviewsForParent(id, null, true);
         });
 
+        socket.on("parent_deleted", (data) => {
+            updateReplyPreviewsForParent(data.parent_id, null, true);
+        });
+
+        socket.on("parent_edited", (data) => {
+            updateReplyPreviewsForParent(data.parent_id, data.new_text, false, data.parent_user);
+        });
 
         socket.on("system", (m) => appendSystem(m.message));
         socket.on("connect", () => console.log("connected"));
@@ -361,6 +363,9 @@
             const div = document.createElement("div");
             div.classList.add("msg");
             div.dataset.id = id;
+            if (text && typeof text === "object" && text.replied_to_id) {
+                div.setAttribute("data-reply-to", String(text.replied_to_id));
+            }
 
             user = user || "ناشناس";
 

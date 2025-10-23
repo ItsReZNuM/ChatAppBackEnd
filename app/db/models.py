@@ -33,5 +33,9 @@ class Message(Base):
     room = relationship("Room", back_populates="messages")
     user = relationship("User", back_populates="messages")
 
-    replied_to = Column(Integer, ForeignKey("messages.id"), nullable=True)
+    replied_to = Column(
+        Integer,
+        ForeignKey("messages.id", ondelete="SET NULL"),
+        nullable=True
+    )
     reply_parent = relationship("Message", remote_side=[id], uselist=False)

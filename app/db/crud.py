@@ -49,7 +49,7 @@ async def get_history(session, room_id: int, limit: int = 2000):
             Message.created_at,
             Message.edited_at,
             Message.replied_to,
-            Message.is_deleted,  # خود پیام
+            Message.is_deleted,
             User.username.label("username"),
             Parent.content.label("reply_text"),
             Parent.is_deleted.label("reply_deleted"),
@@ -58,7 +58,7 @@ async def get_history(session, room_id: int, limit: int = 2000):
         .join(User, User.id == Message.user_id)
         .join(Parent, Parent.id == Message.replied_to, isouter=True)
         .join(ParentUser, ParentUser.id == Parent.user_id, isouter=True)
-        .where(Message.room_id == room_id)
+        .where(Message.room_id == room_id, Message.is_deleted == False)
         .order_by(Message.created_at.asc())
         .limit(limit)
     )
@@ -105,21 +105,6 @@ async def update_message(session: AsyncSession, message_id: int, username: str, 
     await session.refresh(msg)
     return msg
 
-async def delete_message(session: AsyncSession, message_id: int, username: str) -> bool:
-    res = await session.execute(
-        select(Message, User).join(User, Message.user_id == User.id).where(Message.id == message_id)
-    )
-    row = res.first()
-    if not row:
-        return False
-    msg, user = row
-    if user.username != username:
-        return False
-
-    await session.delete(msg)
-    await session.commit()
-    return True
-
 def save_message_sync(db: Session, room_id: int, username: str, content: str) -> int:
     user = db.execute(select(User).where(User.username == username)).scalar_one_or_none()
     if not user:
@@ -165,4 +150,5 @@ async def delete_message_db(session, message_id: int, username: str) -> bool:
         .values(is_deleted=True, edited_at=datetime.now(timezone.utc))
     )
     await session.commit()
+    await session.refresh(msg)
     return True

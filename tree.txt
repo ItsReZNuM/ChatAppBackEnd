@@ -1,0 +1,366 @@
+ChatAppBackEnd/
+├── .gitignore
+├── alembic.ini
+├── alembic/
+│   ├── env.py
+│   ├── script.py.mako
+│   └── versions/
+│       ├── 1bcfe3b17235_add_replied_to_column_to_messages.py
+│       ├── 202510150001_init.py
+│       ├── 202510160001_add_edited_at.py
+│       └── 2967ec3d7af0_add_is_deleted_to_messages.py
+├── app/
+│   ├── __init__.py
+│   ├── api/
+│   │   ├── __init__.py
+│   │   └── routes.py
+│   ├── celery_app.py
+│   ├── core/
+│   │   ├── __init__.py
+│   │   └── config.py
+│   ├── db/
+│   │   ├── __init__.py
+│   │   ├── crud.py
+│   │   ├── models.py
+│   │   ├── schemas.py
+│   │   └── session.py
+│   ├── main.py
+│   ├── socket/
+│   │   ├── __init__.py
+│   │   └── events.py
+│   └── tasks/
+│       └── save_message.py
+├── docker-compose.yml
+├── dockerfile
+├── frontend/
+│   └── index.html
+├── node_modules/
+│   ├── .package-lock.json
+│   ├── @socket.io/
+│   │   └── component-emitter/
+│   │       ├── LICENSE
+│   │       ├── Readme.md
+│   │       ├── lib/
+│   │       │   ├── cjs/
+│   │       │   │   ├── index.d.ts
+│   │       │   │   ├── index.js
+│   │       │   │   └── package.json
+│   │       │   └── esm/
+│   │       │       ├── index.d.ts
+│   │       │       ├── index.js
+│   │       │       └── package.json
+│   │       └── package.json
+│   ├── debug/
+│   │   ├── LICENSE
+│   │   ├── README.md
+│   │   ├── package.json
+│   │   └── src/
+│   │       ├── browser.js
+│   │       ├── common.js
+│   │       ├── index.js
+│   │       └── node.js
+│   ├── engine.io-client/
+│   │   ├── LICENSE
+│   │   ├── README.md
+│   │   ├── build/
+│   │   │   ├── cjs/
+│   │   │   │   ├── browser-entrypoint.d.ts
+│   │   │   │   ├── browser-entrypoint.js
+│   │   │   │   ├── contrib/
+│   │   │   │   │   ├── has-cors.d.ts
+│   │   │   │   │   ├── has-cors.js
+│   │   │   │   │   ├── parseqs.d.ts
+│   │   │   │   │   ├── parseqs.js
+│   │   │   │   │   ├── parseuri.d.ts
+│   │   │   │   │   └── parseuri.js
+│   │   │   │   ├── globals.d.ts
+│   │   │   │   ├── globals.js
+│   │   │   │   ├── globals.node.d.ts
+│   │   │   │   ├── globals.node.js
+│   │   │   │   ├── index.d.ts
+│   │   │   │   ├── index.js
+│   │   │   │   ├── package.json
+│   │   │   │   ├── socket.d.ts
+│   │   │   │   ├── socket.js
+│   │   │   │   ├── transport.d.ts
+│   │   │   │   ├── transport.js
+│   │   │   │   ├── transports/
+│   │   │   │   │   ├── index.d.ts
+│   │   │   │   │   ├── index.js
+│   │   │   │   │   ├── polling-fetch.d.ts
+│   │   │   │   │   ├── polling-fetch.js
+│   │   │   │   │   ├── polling-xhr.d.ts
+│   │   │   │   │   ├── polling-xhr.js
+│   │   │   │   │   ├── polling-xhr.node.d.ts
+│   │   │   │   │   ├── polling-xhr.node.js
+│   │   │   │   │   ├── polling.d.ts
+│   │   │   │   │   ├── polling.js
+│   │   │   │   │   ├── websocket.d.ts
+│   │   │   │   │   ├── websocket.js
+│   │   │   │   │   ├── websocket.node.d.ts
+│   │   │   │   │   ├── websocket.node.js
+│   │   │   │   │   ├── webtransport.d.ts
+│   │   │   │   │   └── webtransport.js
+│   │   │   │   ├── util.d.ts
+│   │   │   │   └── util.js
+│   │   │   ├── esm-debug/
+│   │   │   │   ├── browser-entrypoint.d.ts
+│   │   │   │   ├── browser-entrypoint.js
+│   │   │   │   ├── contrib/
+│   │   │   │   │   ├── has-cors.d.ts
+│   │   │   │   │   ├── has-cors.js
+│   │   │   │   │   ├── parseqs.d.ts
+│   │   │   │   │   ├── parseqs.js
+│   │   │   │   │   ├── parseuri.d.ts
+│   │   │   │   │   └── parseuri.js
+│   │   │   │   ├── globals.d.ts
+│   │   │   │   ├── globals.js
+│   │   │   │   ├── globals.node.d.ts
+│   │   │   │   ├── globals.node.js
+│   │   │   │   ├── index.d.ts
+│   │   │   │   ├── index.js
+│   │   │   │   ├── package.json
+│   │   │   │   ├── socket.d.ts
+│   │   │   │   ├── socket.js
+│   │   │   │   ├── transport.d.ts
+│   │   │   │   ├── transport.js
+│   │   │   │   ├── transports/
+│   │   │   │   │   ├── index.d.ts
+│   │   │   │   │   ├── index.js
+│   │   │   │   │   ├── polling-fetch.d.ts
+│   │   │   │   │   ├── polling-fetch.js
+│   │   │   │   │   ├── polling-xhr.d.ts
+│   │   │   │   │   ├── polling-xhr.js
+│   │   │   │   │   ├── polling-xhr.node.d.ts
+│   │   │   │   │   ├── polling-xhr.node.js
+│   │   │   │   │   ├── polling.d.ts
+│   │   │   │   │   ├── polling.js
+│   │   │   │   │   ├── websocket.d.ts
+│   │   │   │   │   ├── websocket.js
+│   │   │   │   │   ├── websocket.node.d.ts
+│   │   │   │   │   ├── websocket.node.js
+│   │   │   │   │   ├── webtransport.d.ts
+│   │   │   │   │   └── webtransport.js
+│   │   │   │   ├── util.d.ts
+│   │   │   │   └── util.js
+│   │   │   └── esm/
+│   │   │       ├── browser-entrypoint.d.ts
+│   │   │       ├── browser-entrypoint.js
+│   │   │       ├── contrib/
+│   │   │       │   ├── has-cors.d.ts
+│   │   │       │   ├── has-cors.js
+│   │   │       │   ├── parseqs.d.ts
+│   │   │       │   ├── parseqs.js
+│   │   │       │   ├── parseuri.d.ts
+│   │   │       │   └── parseuri.js
+│   │   │       ├── globals.d.ts
+│   │   │       ├── globals.js
+│   │   │       ├── globals.node.d.ts
+│   │   │       ├── globals.node.js
+│   │   │       ├── index.d.ts
+│   │   │       ├── index.js
+│   │   │       ├── package.json
+│   │   │       ├── socket.d.ts
+│   │   │       ├── socket.js
+│   │   │       ├── transport.d.ts
+│   │   │       ├── transport.js
+│   │   │       ├── transports/
+│   │   │       │   ├── index.d.ts
+│   │   │       │   ├── index.js
+│   │   │       │   ├── polling-fetch.d.ts
+│   │   │       │   ├── polling-fetch.js
+│   │   │       │   ├── polling-xhr.d.ts
+│   │   │       │   ├── polling-xhr.js
+│   │   │       │   ├── polling-xhr.node.d.ts
+│   │   │       │   ├── polling-xhr.node.js
+│   │   │       │   ├── polling.d.ts
+│   │   │       │   ├── polling.js
+│   │   │       │   ├── websocket.d.ts
+│   │   │       │   ├── websocket.js
+│   │   │       │   ├── websocket.node.d.ts
+│   │   │       │   ├── websocket.node.js
+│   │   │       │   ├── webtransport.d.ts
+│   │   │       │   └── webtransport.js
+│   │   │       ├── util.d.ts
+│   │   │       └── util.js
+│   │   ├── dist/
+│   │   │   ├── engine.io.esm.min.js
+│   │   │   ├── engine.io.esm.min.js.map
+│   │   │   ├── engine.io.js
+│   │   │   ├── engine.io.js.map
+│   │   │   ├── engine.io.min.js
+│   │   │   └── engine.io.min.js.map
+│   │   └── package.json
+│   ├── engine.io-parser/
+│   │   ├── LICENSE
+│   │   ├── Readme.md
+│   │   ├── build/
+│   │   │   ├── cjs/
+│   │   │   │   ├── commons.d.ts
+│   │   │   │   ├── commons.js
+│   │   │   │   ├── contrib/
+│   │   │   │   │   ├── base64-arraybuffer.d.ts
+│   │   │   │   │   └── base64-arraybuffer.js
+│   │   │   │   ├── decodePacket.browser.d.ts
+│   │   │   │   ├── decodePacket.browser.js
+│   │   │   │   ├── decodePacket.d.ts
+│   │   │   │   ├── decodePacket.js
+│   │   │   │   ├── encodePacket.browser.d.ts
+│   │   │   │   ├── encodePacket.browser.js
+│   │   │   │   ├── encodePacket.d.ts
+│   │   │   │   ├── encodePacket.js
+│   │   │   │   ├── index.d.ts
+│   │   │   │   ├── index.js
+│   │   │   │   └── package.json
+│   │   │   └── esm/
+│   │   │       ├── commons.d.ts
+│   │   │       ├── commons.js
+│   │   │       ├── contrib/
+│   │   │       │   ├── base64-arraybuffer.d.ts
+│   │   │       │   └── base64-arraybuffer.js
+│   │   │       ├── decodePacket.browser.d.ts
+│   │   │       ├── decodePacket.browser.js
+│   │   │       ├── decodePacket.d.ts
+│   │   │       ├── decodePacket.js
+│   │   │       ├── encodePacket.browser.d.ts
+│   │   │       ├── encodePacket.browser.js
+│   │   │       ├── encodePacket.d.ts
+│   │   │       ├── encodePacket.js
+│   │   │       ├── index.d.ts
+│   │   │       ├── index.js
+│   │   │       └── package.json
+│   │   └── package.json
+│   ├── ms/
+│   │   ├── index.js
+│   │   ├── license.md
+│   │   ├── package.json
+│   │   └── readme.md
+│   ├── socket.io-client/
+│   │   ├── LICENSE
+│   │   ├── README.md
+│   │   ├── build/
+│   │   │   ├── cjs/
+│   │   │   │   ├── browser-entrypoint.d.ts
+│   │   │   │   ├── browser-entrypoint.js
+│   │   │   │   ├── contrib/
+│   │   │   │   │   ├── backo2.d.ts
+│   │   │   │   │   └── backo2.js
+│   │   │   │   ├── index.d.ts
+│   │   │   │   ├── index.js
+│   │   │   │   ├── manager.d.ts
+│   │   │   │   ├── manager.js
+│   │   │   │   ├── on.d.ts
+│   │   │   │   ├── on.js
+│   │   │   │   ├── socket.d.ts
+│   │   │   │   ├── socket.js
+│   │   │   │   ├── url.d.ts
+│   │   │   │   └── url.js
+│   │   │   ├── esm-debug/
+│   │   │   │   ├── browser-entrypoint.d.ts
+│   │   │   │   ├── browser-entrypoint.js
+│   │   │   │   ├── contrib/
+│   │   │   │   │   ├── backo2.d.ts
+│   │   │   │   │   └── backo2.js
+│   │   │   │   ├── index.d.ts
+│   │   │   │   ├── index.js
+│   │   │   │   ├── manager.d.ts
+│   │   │   │   ├── manager.js
+│   │   │   │   ├── on.d.ts
+│   │   │   │   ├── on.js
+│   │   │   │   ├── package.json
+│   │   │   │   ├── socket.d.ts
+│   │   │   │   ├── socket.js
+│   │   │   │   ├── url.d.ts
+│   │   │   │   └── url.js
+│   │   │   └── esm/
+│   │   │       ├── browser-entrypoint.d.ts
+│   │   │       ├── browser-entrypoint.js
+│   │   │       ├── contrib/
+│   │   │       │   ├── backo2.d.ts
+│   │   │       │   └── backo2.js
+│   │   │       ├── index.d.ts
+│   │   │       ├── index.js
+│   │   │       ├── manager.d.ts
+│   │   │       ├── manager.js
+│   │   │       ├── on.d.ts
+│   │   │       ├── on.js
+│   │   │       ├── package.json
+│   │   │       ├── socket.d.ts
+│   │   │       ├── socket.js
+│   │   │       ├── url.d.ts
+│   │   │       └── url.js
+│   │   ├── dist/
+│   │   │   ├── socket.io.esm.min.js
+│   │   │   ├── socket.io.esm.min.js.map
+│   │   │   ├── socket.io.js
+│   │   │   ├── socket.io.js.map
+│   │   │   ├── socket.io.min.js
+│   │   │   ├── socket.io.min.js.map
+│   │   │   ├── socket.io.msgpack.min.js
+│   │   │   └── socket.io.msgpack.min.js.map
+│   │   └── package.json
+│   ├── socket.io-parser/
+│   │   ├── LICENSE
+│   │   ├── Readme.md
+│   │   ├── build/
+│   │   │   ├── cjs/
+│   │   │   │   ├── binary.d.ts
+│   │   │   │   ├── binary.js
+│   │   │   │   ├── index.d.ts
+│   │   │   │   ├── index.js
+│   │   │   │   ├── is-binary.d.ts
+│   │   │   │   ├── is-binary.js
+│   │   │   │   └── package.json
+│   │   │   ├── esm-debug/
+│   │   │   │   ├── binary.d.ts
+│   │   │   │   ├── binary.js
+│   │   │   │   ├── index.d.ts
+│   │   │   │   ├── index.js
+│   │   │   │   ├── is-binary.d.ts
+│   │   │   │   ├── is-binary.js
+│   │   │   │   └── package.json
+│   │   │   └── esm/
+│   │   │       ├── binary.d.ts
+│   │   │       ├── binary.js
+│   │   │       ├── index.d.ts
+│   │   │       ├── index.js
+│   │   │       ├── is-binary.d.ts
+│   │   │       ├── is-binary.js
+│   │   │       └── package.json
+│   │   └── package.json
+│   ├── ws/
+│   │   ├── LICENSE
+│   │   ├── README.md
+│   │   ├── browser.js
+│   │   ├── index.js
+│   │   ├── lib/
+│   │   │   ├── buffer-util.js
+│   │   │   ├── constants.js
+│   │   │   ├── event-target.js
+│   │   │   ├── extension.js
+│   │   │   ├── limiter.js
+│   │   │   ├── permessage-deflate.js
+│   │   │   ├── receiver.js
+│   │   │   ├── sender.js
+│   │   │   ├── stream.js
+│   │   │   ├── subprotocol.js
+│   │   │   ├── validation.js
+│   │   │   ├── websocket-server.js
+│   │   │   └── websocket.js
+│   │   ├── package.json
+│   │   └── wrapper.mjs
+│   └── xmlhttprequest-ssl/
+│       ├── LICENSE
+│       ├── README.md
+│       ├── lib/
+│       │   └── XMLHttpRequest.js
+│       └── package.json
+├── package-lock.json
+├── package.json
+├── requirements.txt
+└── uploads/
+    ├── index.html
+    ├── map.jpg
+    ├── restaurant (1).png
+    ├── test.png
+    └── university.png
